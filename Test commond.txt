@@ -1,0 +1,174 @@
+/**************************************************************************//**
+* function      xTest
+* @brief        PCB Self Test
+* @details
+* @note         None
+* @param[in]
+* @return       None
+******************************************************************************/
+BaseType_t xTest( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString )
+{
+	AP_SCAN_FORMAT_t format = atoi(pcCommandString + strlen(NORIA_COMMAND_APSCAN));
+	GetApList(pcWriteBuffer, xWriteBufferLen, format, true);
+	uint8_t Error = 0;
+	//pcWriteBuffer += snprintf(pcWriteBuffer, xWriteBufferLen, "\n///////// Start Self Test //////////\r\n");
+	LogInfoMsg(TEST_SUBSYSTEM,"\n///////// Start Self Test //////////\r\n");
+	delay_s(2);
+	uint32_t test_time = 0;
+	
+
+
+#ifdef TEST_TACH
+	uint32_t fan1Raw = GetRawRevFan1();
+	uint32_t fan1Rpm = CalculateRpmFan1();
+	PWM_feedback = TEST_PWM;
+
+	LogInfoMsg(TEST_SUBSYSTEM,"\nTesting Tachometer Input...\r\n");
+	LogInfoMsg(TEST_SUBSYSTEM,"Fan1 Raw: %lu  \r\n",fan1Raw);	
+	LogInfoMsg(TEST_SUBSYSTEM,"Deltatime:%lu  \r\n",fanRpmDeltaTime);
+	LogInfoMsg(TEST_SUBSYSTEM,"Rpm:%lu \r\n",(fan1Raw * (SECONDS_IN_MINUTE/FAN2_PULSES_PER_REV) *configTICK_RATE_HZ)/fanRpmDeltaTime);
+	LogInfoMsg(TEST_SUBSYSTEM,"\nTesting PWM Output...\r\n");
+	while((fan1Rev>TEST_RPM+1) || (fan1Rev<TEST_RPM-1));
+	PWM_feedback = TEST_PWM_1;
+	delay_s(5);
+	while((!((fan1Rev>TEST_RPM_ERR+1) || (fan1Rev<TEST_RPM_ERR-1))) || (!((fan1Rev>TEST_RPM_OK+1) || (fan1Rev<TEST_RPM_OK-1))));
+	while((fan1Rev>TEST_RPM+1) || (fan1Rev<TEST_RPM-1));
+	PWM_feedback = TEST_PWM_2;
+	delay_s(5);
+	
+	//while((!((fan1Rev>TEST_RPM_ERR+1) || (fan1Rev<TEST_RPM_ERR-1))) || (!((fan1Rev>TEST_RPM_OK+1) || (fan1Rev<TEST_RPM_OK-1))));
+	//while((fan1Rev>TEST_RPM+1) || (fan1Rev<TEST_RPM-1));
+	//PWM_feedback = TEST_PWM_3;
+	/*while(1)
+	{
+		test_time ++;
+		if(fan1Rev <120 & fan1Rev >80)
+		{
+			LogInfoMsg(TEST_SUBSYSTEM,"PWM Output OK!  \r\n");
+			break;
+		}
+		if(fan1Rev >250 & fan1Rev < 320)
+		{
+			LogInfoMsg(TEST_SUBSYSTEM,"PWM Output Error!  \r\n");
+			break;
+		}
+		if(test_time>10000)
+		{
+			test_time = 0;
+			LogInfoMsg(TEST_SUBSYSTEM,"PWM Output Time Out!  \r\n");
+			break;
+		}
+		
+	}*/
+
+	//pcWriteBuffer += snprintf(pcWriteBuffer, xWriteBufferLen, "Rpm:%lu \r\n", (fan1Rev * (SECONDS_IN_MINUTE/FAN2_PULSES_PER_REV) *configTICK_RATE_HZ)/fanRpmDeltaTime);	
+	
+	delay_s(2);
+	LogInfoMsg(TEST_SUBSYSTEM,"Tachometer Input OK!\r\n");
+	LogInfoMsg(TEST_SUBSYSTEM,"PWM OK!\r\n");
+#endif
+
+
+#ifdef TEST_UI
+	//delay_s(10);
+	LogInfoMsg(TEST_SUBSYSTEM,"\nTesting LEDs...\r\n");
+	while((fan1Rev>TEST_RPM_LED+1) || (fan1Rev<TEST_RPM_LED-1));
+	for(uint8_t i=0;i<50;i++){
+		uiStruct.uiState = UI_DISPLAY_STATE_TURN_ON;
+		turningOnState = UI_TEST_R;
+		UserInterfaceDrawScreen();
+	}
+	for(uint8_t i=0;i<50;i++){
+		uiStruct.uiState = UI_DISPLAY_STATE_TURN_ON;
+		turningOnState = UI_TEST_G;
+		UserInterfaceDrawScreen();
+
+	}
+	for(uint8_t i=0;i<50;i++){
+		uiStruct.uiState = UI_DISPLAY_STATE_TURN_ON;
+		turningOnState = UI_TEST_B;
+		UserInterfaceDrawScreen();
+	}
+
+	LogInfoMsg(TEST_SUBSYSTEM,"LEDs OK!\r\n");
+	PWM_feedback = TEST_PWM;
+	
+	
+	
+	uiButtonState = UI_BS_IDLE;
+	LogInfoMsg(TEST_SUBSYSTEM,"\nTesting Button...\r\n");
+	while(1)
+	{
+		test_time ++;
+		if(uiButtonState == UI_BS_BUTTON_PRESSED)
+		{
+			LogInfoMsg(TEST_SUBSYSTEM,"Press OK!  \r\n");
+			PWM_feedback = TEST_PWM_BU;
+			//delay_s(10);
+			break;
+			
+		}
+		
+		if(test_time>10000000)
+		{
+			test_time = 0;
+			LogInfoMsg(TEST_SUBSYSTEM,"UI Test	 Time Out!  \r\n");
+			break;
+		}
+		
+	}
+	while((fan1Rev>TEST_RPM+2) || (fan1Rev<TEST_RPM-2));
+	/*while(1)
+	{
+		test_time ++;
+		if(uiButtonState ==  UI_BS_BUTTON_AND_CLOCKWISE_TURNING)
+		{
+			LogInfoMsg(TEST_SUBSYSTEM,"Press OK!  \r\n");
+			break;
+			
+		}
+		
+		if(test_time>10000000)
+		{
+			test_time = 0;
+			LogInfoMsg(TEST_SUBSYSTEM,"UI Test	 Time Out!  \r\n");
+			break;
+		}
+		
+	}
+	
+	while(1)
+	{
+		test_time ++;
+		if(uiButtonState ==  UI_BS_BUTTON_DOUBLE_PRESSED)
+		{
+			LogInfoMsg(TEST_SUBSYSTEM,"Press OK!  \r\n");
+			break;
+			
+		}
+		
+		if(test_time>10000000)
+		{
+			test_time = 0;
+			LogInfoMsg(TEST_SUBSYSTEM,"UI Test	 Time Out!  \r\n");
+			break;
+		}
+		
+	}*/
+	LogInfoMsg(TEST_SUBSYSTEM,"\nTesting WIFI...\r\n");
+	GetApList(pcWriteBuffer, xWriteBufferLen, format, true);
+	delay_s(2);
+	LogInfoMsg(TEST_SUBSYSTEM,"AP found:%lu  \r\n",numApsScanned);
+	PWM_feedback = TEST_PWM_WIFI;
+	if(numApsScanned!=0)
+	{
+		PWM_feedback = TEST_PWM_WIFI;
+		LogInfoMsg(TEST_SUBSYSTEM,"\nWIFI OK!\r\n");
+	}
+	
+
+	
+#endif
+
+	return pdFALSE;
+}
